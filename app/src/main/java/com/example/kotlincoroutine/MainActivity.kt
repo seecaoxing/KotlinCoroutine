@@ -12,46 +12,163 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        main7()
+    }
 
-        GlobalScope.launch {
-            println("time1:" + SystemClock.currentThreadTimeMillis())
+    private fun main7() {
+        GlobalScope.launch(Dispatchers.Unconfined) {
+            println("协程 开始执行，时间:  ${System.currentTimeMillis()}")
+            var token = GlobalScope.async(Dispatchers.Unconfined) {
+                return@async getToken()
+            }.await()
+
+            var response = GlobalScope.async(Dispatchers.Unconfined) {
+                return@async getResponse(token)
+            }.await()
+
+            setText(response)
+        }
+    }
+
+    private suspend fun getToken(): String {
+        delay(300)
+        println("getToken 开始执行，时间:  ${System.currentTimeMillis()}")
+        return "ask"
+    }
+
+    private suspend fun getResponse(token: String): String {
+        delay(100)
+        println("getResponse 开始执行$token，时间:  ${System.currentTimeMillis()}")
+        return "response"
+    }
+
+    private fun setText(response: String) {
+        println("setText 开始执行$response ，时间:  ${System.currentTimeMillis()}")
+    }
+
+    private fun main6() {
+        // 运行时
+        GlobalScope.launch(Dispatchers.Main) {
+            println("协程 开始执行，时间:  ${System.currentTimeMillis()}")
+            val token = getToken()
+            val response = getResponse(token)
+            setText(response)
+        }
+    }
+
+
+    private fun main5() {
+
+        GlobalScope.launch(Dispatchers.Unconfined) {
+            for (i in 1..3) {
+                println("协程任务打印第$i 次，时间: ${System.currentTimeMillis()}")
+            }
+        }
+
+        for (i in 1..3) {
+            println("主线程打印第$i 次，时间:  ${System.currentTimeMillis()}")
+        }
+    }
+
+    private fun main4() {
+        println("main ${System.currentTimeMillis()}")
+
+        runBlocking {
+            // 阻塞1s
+            delay(1000L)
+            println("This is a coroutines ${System.currentTimeMillis()}")
+        }
+        // 阻塞2s
+        Thread.sleep(2000L)
+        println("main end ${System.currentTimeMillis()}")
+    }
+
+
+    private fun main3() {
+
+        GlobalScope.launch(Dispatchers.Unconfined) {
+            val deferred = GlobalScope.async {
+                delay(1000L)
+                Log.d("AA", "This is async ")
+                return@async "taonce"
+            }
+            Log.d("AA", "协程 other start")
+            val result = deferred.await()
+            Log.d("AA", "async result is $result")
+            Log.d("AA", "协程 other end ")
+        }
+        Log.d("AA", "主线程位于协程之后的代码执行，时间:  ${System.currentTimeMillis()}")
+    }
+
+    private fun main2() {
+
+        Log.d("AA", "协程初始化开始，时间: " + System.currentTimeMillis())
+
+        GlobalScope.launch(context = Dispatchers.Unconfined) {
+            Log.d("AA", "launch:" + Thread.currentThread().name) // 在延迟后打印输出
+
+            Log.d("AA", "协程初始化完成，时间: " + System.currentTimeMillis())
+
+            for (i in 1..3) {
+                Log.d("AA", "协程任务1打印第$i 次，时间: " + System.currentTimeMillis())
+            }
+
+            delay(500)
+
+            for (i in 1..3) {
+                Log.d("AA", "协程任务2打印第$i 次，时间: " + System.currentTimeMillis())
+            }
+
+        }
+
+        Log.d("AA", "主线程 sleep ，时间: " + System.currentTimeMillis())
+
+        Thread.sleep(1000)
+
+        Log.d("AA", "主线程运行，时间: " + System.currentTimeMillis())
+
+        for (i in 1..3) {
+            Log.d("AA", "主线程打印第$i 次，时间: " + System.currentTimeMillis())
+        }
+
+    }
+
+
+    private fun main1() {
+
+        GlobalScope.launch(Dispatchers.Unconfined) {
+            println("launch:" + Thread.currentThread().name) // 在延迟后打印输出
+
+            println("time1:" + System.currentTimeMillis())
 
             val token = requestToken()
             val post = createPost(token)
             processPost(post)
-            println("time2:" + SystemClock.currentThreadTimeMillis())
 
+            println("time2:" + System.currentTimeMillis())
         }
-
         println("main:" + Thread.currentThread().name)
+
 
     }
 
 
     private suspend fun requestToken(): String {
-
-        delay(2000)
-        println("time requestToken:" + SystemClock.currentThreadTimeMillis())
-
+        delay(500)
+        println("time requestToken:" + System.currentTimeMillis())
         println("requestToken:" + Thread.currentThread().name) // 在延迟后打印输出
         return "token"
-
-
     }
 
     private suspend fun createPost(token: String): String {
-        delay(1000)
-        println("time createPost:" + SystemClock.currentThreadTimeMillis())
-
+        println("time createPost:" + System.currentTimeMillis())
         println("createPost:" + Thread.currentThread().name) // 在延迟后打印输出
         return "post$token"
     }
 
-    private fun processPost(post: String) {
-        println("time processPost:" + SystemClock.currentThreadTimeMillis())
-
+    private suspend fun processPost(post: String) {
+        println("time processPost:" + System.currentTimeMillis())
         println("processPost:$post") // 在延迟后打印输出
-
     }
 
 
