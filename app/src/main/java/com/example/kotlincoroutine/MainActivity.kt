@@ -23,7 +23,7 @@ class MainActivity : AppCompatActivity() {
 
         }
 
-        println("main:" + Thread.currentThread().name) // 在延迟后打印输出
+        println("main:" + Thread.currentThread().name)
 
     }
 
