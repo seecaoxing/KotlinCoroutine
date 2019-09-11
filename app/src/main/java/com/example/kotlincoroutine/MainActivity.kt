@@ -12,8 +12,85 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        main7()
+        main9()
     }
+
+    private fun main9() {
+
+        suspend fun getToken(): String {
+            delay(200)
+            println("getToken  开始执行，时间:  ${System.currentTimeMillis()}" + "，线程：" + Thread.currentThread().name)
+            return "ask"
+        }
+
+        suspend fun getResponse(token: String): String {
+            delay(200)
+            println("getResponse  开始执行$token，2时间:  ${System.currentTimeMillis()}" + "，线程：" + Thread.currentThread().name)
+            return "response"
+        }
+
+        fun setText(response: String) {
+            println("setText 开始执行$response ，时间:  ${System.currentTimeMillis()}" + "，线程：" + Thread.currentThread().name)
+        }
+
+        // 协程任务
+        var job = GlobalScope.launch(Dispatchers.IO) {
+            println("协程测试 开始执行，线程：${Thread.currentThread().name}")
+            var token = GlobalScope.async(Dispatchers.IO) {
+                return@async getToken()
+            }.await()
+
+            var response = GlobalScope.async(Dispatchers.IO) {
+                return@async getResponse(token)
+            }.await()
+
+            setText(response)
+        }
+
+        // 取消协程
+        job?.cancel()
+
+        println("btn_right 结束协程")
+    }
+
+    private fun main8() {
+
+        suspend fun getToken(): String {
+            println("getToken 1 开始执行，时间:  ${System.currentTimeMillis()}" + "，线程：" + Thread.currentThread().name)
+            delay(200)
+            println("getToken 2 开始执行，时间:  ${System.currentTimeMillis()}" + "，线程：" + Thread.currentThread().name)
+            return "ask"
+        }
+
+        suspend fun getResponse(token: String): String {
+            println("getResponse 1 开始执行$token，时间:  ${System.currentTimeMillis()}" + "，线程：" + Thread.currentThread().name)
+            delay(200)
+            println("getResponse 2 开始执行$token，2时间:  ${System.currentTimeMillis()}" + "，线程：" + Thread.currentThread().name)
+            return "response"
+        }
+
+        fun setText(response: String) {
+            println("setText 开始执行$response ，时间:  ${System.currentTimeMillis()}" + "，线程：" + Thread.currentThread().name)
+        }
+
+        GlobalScope.launch(Dispatchers.IO) {
+            println("协程测试 开始执行，线程：${Thread.currentThread().name}")
+            var token = GlobalScope.async(Dispatchers.Unconfined) {
+                return@async getToken()
+            }.await()
+
+            GlobalScope.launch {
+                println("测试 会不会阻塞其他，线程：${Thread.currentThread().name}")
+            }
+            var response = GlobalScope.async(Dispatchers.Unconfined) {
+                return@async getResponse(token)
+            }.await()
+            setText(response)
+        }
+        println("主线程协程后面代码执行，线程：${Thread.currentThread().name}")
+
+    }
+
 
     private fun main7() {
         GlobalScope.launch(Dispatchers.Unconfined) {
@@ -31,13 +108,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private suspend fun getToken(): String {
-        delay(300)
+        delay(100)
         println("getToken 开始执行，时间:  ${System.currentTimeMillis()}")
         return "ask"
     }
 
     private suspend fun getResponse(token: String): String {
-        delay(100)
+        delay(200)
         println("getResponse 开始执行$token，时间:  ${System.currentTimeMillis()}")
         return "response"
     }
@@ -48,11 +125,14 @@ class MainActivity : AppCompatActivity() {
 
     private fun main6() {
         // 运行时
-        GlobalScope.launch(Dispatchers.Main) {
+        GlobalScope.launch(Dispatchers.Unconfined) {
             println("协程 开始执行，时间:  ${System.currentTimeMillis()}")
             val token = getToken()
             val response = getResponse(token)
             setText(response)
+        }
+        for (i in 1..10) {
+            println("主线程打印第$i 次，时间:  ${System.currentTimeMillis()}")
         }
     }
 
