@@ -3,16 +3,140 @@ package com.example.kotlincoroutine
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.SystemClock
+import android.provider.Settings
 import android.util.Log
+import android.widget.Toast
+import com.jakewharton.retrofit2.adapter.kotlin.coroutines.CoroutineCallAdapterFactory
 import kotlinx.coroutines.*
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.converter.gson.GsonConverterFactory
 import kotlin.concurrent.thread
 
 class MainActivity : AppCompatActivity() {
 
+    val gitHubServiceApi by lazy {
+        val retrofit = retrofit2.Retrofit.Builder()
+            .baseUrl("https://api.github.com")
+            .addConverterFactory(GsonConverterFactory.create())
+            .addCallAdapterFactory(CoroutineCallAdapterFactory())//添加对 Deferred 的支持
+            .build()
+        retrofit.create(GitHubServiceApi::class.java)
+    }
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        main9()
+        main14()
+
+    }
+
+    private fun main14() {
+
+        GlobalScope.launch(Dispatchers.Unconfined) {
+
+            System.out.println("Thread ${Thread.currentThread().name}")
+
+            GlobalScope.launch {
+                delay(1000)
+                System.out.println("Thread ${Thread.currentThread().name}")
+            }
+
+            System.out.println("end")
+        }
+        System.out.println("main")
+
+    }
+
+
+    private fun main13() {
+
+        GlobalScope.launch(Dispatchers.Unconfined) {
+
+            System.out.println("Thread ${Thread.currentThread().name}")
+
+            var result = GlobalScope.async {
+                delay(1000)
+                System.out.println("Thread ${Thread.currentThread().name}")
+            }
+
+            System.out.println("result ${result.await()}")
+
+            System.out.println("end")
+        }
+
+        System.out.println("main")
+
+    }
+
+    private fun main12() {
+
+        GlobalScope.launch(Dispatchers.Main) {
+            System.out.println("1-1")
+
+            delay(2000)
+            System.out.println("1-2")
+        }
+
+        GlobalScope.launch(Dispatchers.Main) {
+            System.out.println("2-1")
+
+            delay(3000)
+            System.out.println("2-2")
+        }
+
+        System.out.println("main")
+
+
+    }
+
+    private fun main11() {
+
+        suspend fun getToken(): String {
+            delay(100)
+            println("getToken 开始执行，时间:  ${System.currentTimeMillis()}")
+            return "ask"
+        }
+
+        GlobalScope.launch(Dispatchers.Main) {
+            System.out.println("Thread " + Thread.currentThread().name)
+            var result = GlobalScope.async {
+                System.out.println("Thread " + Thread.currentThread().name)
+                getToken()
+            }
+            System.out.println("result ${result.await()}")
+            System.out.println("end")
+
+        }
+    }
+
+    private fun main10() {
+        gitHubServiceApi.getUser("bennyhuo").enqueue(object : Callback<User> {
+            override fun onFailure(call: Call<User>, t: Throwable) {
+                System.out.println("Thread " + Thread.currentThread().name)
+                Toast.makeText(this@MainActivity, "onFailure", Toast.LENGTH_SHORT).show()
+            }
+
+            override fun onResponse(call: Call<User>, response: Response<User>) {
+                System.out.println("Thread " + Thread.currentThread().name)
+                Toast.makeText(this@MainActivity, "onResponse", Toast.LENGTH_SHORT).show()
+            }
+        })
+
+
+
+        GlobalScope.launch(Dispatchers.Main) {
+            try {
+                System.out.println(Thread.currentThread().name)
+                System.out.println(gitHubServiceApi.getUser2("bennyhuo").await())
+            } catch (e: Exception) {
+                System.out.println(Thread.currentThread().name)
+                System.out.println(e)
+            }
+
+        }
     }
 
     private fun main9() {
@@ -152,14 +276,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun main4() {
         println("main ${System.currentTimeMillis()}")
-
         runBlocking {
-            // 阻塞1s
             delay(1000L)
             println("This is a coroutines ${System.currentTimeMillis()}")
         }
-        // 阻塞2s
-        Thread.sleep(2000L)
+        Thread.sleep(500L)
         println("main end ${System.currentTimeMillis()}")
     }
 
